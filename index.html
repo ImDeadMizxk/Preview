@@ -9,7 +9,7 @@
     <link rel="icon" href="https://i.imgur.com/HUhIujV.jpeg" type="image/jpeg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* MEJORA: Reglas de scroll aplicadas a <html> para mayor compatibilidad */
+        /* Reglas de scroll aplicadas a <html> para mayor compatibilidad */
         html {
             /* Ocultar scrollbar para Firefox */
             scrollbar-width: none;
@@ -22,11 +22,10 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            /* MEJORA: Fondo ligeramente más claro */
             background-color: #1a1a1a;
             margin: 0;
             overflow-x: hidden;
-            /* MEJORA: Evita la selección de texto e imágenes para prevenir el arrastre */
+            /* Evita la selección de texto e imágenes para prevenir el arrastre */
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -41,14 +40,12 @@
             z-index: -1;
         }
         .glass-container {
-            /* MEJORA: Efecto de cristal más claro */
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15);
         }
         .gradient-text {
-            /* MEJORA: Gradiente con tonos más claros */
             background: linear-gradient(135deg, #a855f7, #d946ef, #ec4899, #f97316);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -79,7 +76,16 @@
 
         <!-- Input Form -->
         <div class="flex flex-col sm:flex-row gap-3">
-            <input type="url" id="instagramUrl" placeholder="https://instagram.com/p/..." class="flex-grow bg-gray-800/50 text-white border-2 border-gray-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-300">
+            <!-- MEJORA: Contenedor relativo para el input y el botón de limpiar -->
+            <div class="relative flex-grow">
+                <input type="url" id="instagramUrl" placeholder="https://instagram.com/p/..." class="w-full bg-gray-800/50 text-white border-2 border-gray-500 rounded-lg pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-300">
+                <!-- Botón para limpiar el input -->
+                <button id="clearInputBtn" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden cursor-pointer">
+                    <svg class="h-6 w-6 text-gray-400 hover:text-white transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+            </div>
             <button id="previewBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 transform hover:scale-105 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye-fill mr-2" viewBox="0 0 16 16">
                   <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
@@ -111,11 +117,12 @@
     </footer>
 
     <script>
-        // --- MEJORA: Deshabilitar click derecho ---
+        // --- Deshabilitar click derecho ---
         document.addEventListener('contextmenu', event => event.preventDefault());
 
         // --- Instagram Previewer Logic ---
         const urlInput = document.getElementById('instagramUrl');
+        const clearInputBtn = document.getElementById('clearInputBtn');
         const previewBtn = document.getElementById('previewBtn');
         const initialMessage = document.getElementById('initialMessage');
         const loadingSpinner = document.getElementById('loadingSpinner');
@@ -123,11 +130,29 @@
         const previewContainer = document.getElementById('previewContainer');
         const previewFrame = document.getElementById('previewFrame');
 
+        // --- Event Listeners ---
         previewBtn.addEventListener('click', generatePreview);
+        
         urlInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 generatePreview();
             }
+        });
+
+        // MEJORA: Lógica para mostrar/ocultar y limpiar el input
+        urlInput.addEventListener('input', () => {
+            if (urlInput.value.length > 0) {
+                clearInputBtn.classList.remove('hidden');
+            } else {
+                clearInputBtn.classList.add('hidden');
+            }
+        });
+
+        clearInputBtn.addEventListener('click', () => {
+            urlInput.value = '';
+            clearInputBtn.classList.add('hidden');
+            resetUI();
+            urlInput.focus();
         });
 
         function generatePreview() {
@@ -200,7 +225,6 @@
             particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             
             const particlesMaterial = new THREE.PointsMaterial({
-                /* MEJORA: Color de partículas más claro */
                 color: 0xaa66ff,
                 size: 0.15,
                 blending: THREE.AdditiveBlending,
