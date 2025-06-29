@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsualizador de Instagram y TikTok</title>
+    <title>Previsual-IZ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="https://i.imgur.com/HUhIujV.jpeg" type="image/jpeg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -66,9 +66,9 @@
     <div class="w-full max-w-md mx-auto glass-container rounded-2xl shadow-2xl p-6 md:p-8">
         
         <!-- Header -->
-        <div class="text-center mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold gradient-text">Previsualizador de Medios</h1>
-            <p class="text-gray-200 mt-2">Pega un enlace de Instagram o TikTok.</p>
+        <div class="text-center mb-6 flex flex-col items-center">
+            <img src="https://i.imgur.com/bqjvzGf.png" alt="Logo" class="w-24 h-24 rounded-full border-2 border-purple-400 object-cover mb-4 shadow-lg">
+            <p class="text-gray-200">Pega un enlace de Instagram o TikTok.</p>
         </div>
 
         <!-- Input Form -->
@@ -164,24 +164,36 @@
 
         async function handleTikTok(url) {
             try {
-                // Usamos la API oEmbed de TikTok
                 const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 
                 if (data.html) {
-                    displayEmbed(data.html);
-                    // El embed de TikTok carga un script, necesitamos asegurarnos de que se ejecute
-                    window.setTimeout(() => {
-                        const script = previewContainer.querySelector('script');
-                        if (script) {
-                            const newScript = document.createElement('script');
-                            newScript.src = script.src;
-                            newScript.async = true;
-                            document.body.appendChild(newScript);
-                            script.remove();
+                    // MEJORA: Observar el contenedor para esperar a que el script de TikTok
+                    // reemplace el contenido antes de mostrarlo. Esto evita ver el texto de la cita.
+                    const observer = new MutationObserver((mutations, obs) => {
+                        if (previewContainer.querySelector('iframe')) {
+                            loadingSpinner.classList.add('hidden');
+                            previewContainer.classList.remove('hidden');
+                            obs.disconnect();
                         }
-                    }, 100);
+                    });
+
+                    observer.observe(previewContainer, { childList: true, subtree: true });
+                    
+                    previewContainer.innerHTML = data.html;
+                    
+                    const script = previewContainer.querySelector('script');
+                    if (script) {
+                        const newScript = document.createElement('script');
+                        newScript.src = script.src;
+                        newScript.async = true;
+                        document.body.appendChild(newScript);
+                        script.remove();
+                    } else {
+                        showError('No se pudo obtener el script de previsualización de TikTok.');
+                        observer.disconnect();
+                    }
                 } else {
                     showError('No se pudo obtener la previsualización de TikTok.');
                 }
@@ -195,16 +207,12 @@
             const postId = /(?:instagram\.com)\/(?:p|reel|tv)\/([a-zA-Z0-9_-]+)/.exec(url);
             if (postId && postId[1]) {
                 const embedHtml = `<iframe src="https://www.instagram.com/p/${postId[1]}/embed/" style="border:0; width:328px; height:500px; border-radius: 0.5rem;" allowfullscreen scrolling="no"></iframe>`;
-                displayEmbed(embedHtml);
+                previewContainer.innerHTML = embedHtml;
+                loadingSpinner.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
             } else {
                 showError('URL de Instagram no válida.');
             }
-        }
-
-        function displayEmbed(htmlContent) {
-            previewContainer.innerHTML = htmlContent;
-            loadingSpinner.classList.add('hidden');
-            previewContainer.classList.remove('hidden');
         }
 
         function resetUI() {
